@@ -1,4 +1,4 @@
-﻿namespace AzureDevopsAgentPoolMigrator
+namespace AzureDevopsAgentPoolMigrator
 {
     using System;
     using System.Collections.Generic;
@@ -14,7 +14,7 @@
 
     public class AgentPoolMigrator
     {
-        private const string comment = "All agent pools linked in this release definition updated with new correct id";
+        private const string comment = "Fix the release queue/pool after migration from Azure DevOps Server to Azure DevOps Services";
 
         private readonly ClientManager clients;
 
@@ -26,10 +26,10 @@
             this.clients = clients;
         }
 
-        public async Task Migrate(string collection, string project, string[] rootFoldersToInclude)
+        public async Task Migrate(string collection, string project)
         {
             Program.Log($"Start migrating agent pools in collection: '{collection}' and project: '{project}'");
-            Program.Log($"Scope: all release definitions in root folder(s): {string.Join(", ", rootFoldersToInclude)}");
+            Program.Log($"Scope: all release definitions");
 
             var taskgroups = await clients.AgentClient.GetTaskGroupsAsync(project);
 
@@ -37,7 +37,7 @@
             var queues = await GetCurrentAgentQueues(project);
             var currentDefinition = 0;
 
-            var releaseDefinitions = await GetRelevantReleaseDefinitions(project, rootFoldersToInclude);
+            var releaseDefinitions = await GetRelevantReleaseDefinitions(project);
             var amountOfDefinitions = releaseDefinitions.Count();
 
             foreach (var item in releaseDefinitions)
@@ -66,7 +66,8 @@
                             var poolName = oldAgentMapping.FirstOrDefault(x => x.Id == deploymentInput.QueueId)?.Name;
                             if (string.IsNullOrEmpty(poolName))
                             {
-                                Program.Log($"Agent pool/queue met Id {deploymentInput.QueueId} niet gevonden in json");
+                                Program.Log($"Agent pool/queue met Id {deploymentInput.QueueId} niet gevonden in json, er worden geen aanpassingen gedaan");
+                                continue;
                             }
 
                             // Edit the QueueId (pools are called queues in the API) to the new correct version
@@ -136,7 +137,7 @@
             return queues;
         }
 
-        private async Task<List<ReleaseDefinition>> GetRelevantReleaseDefinitions(string project, string[] rootFoldersToInclude)
+        private async Task<List<ReleaseDefinition>> GetRelevantReleaseDefinitions(string project)
         {
             // Get all release definitions
             var allDefinitions = await clients.ReleaseClient.GetReleaseDefinitionsAsync(project);
@@ -145,14 +146,14 @@
             List<ReleaseDefinition> filteredDefinitions;
             try
             {
-                filteredDefinitions = allDefinitions.Where(def => rootFoldersToInclude.Any(folder => def.Path.GetRootFolder().ToLower() == folder.ToLower())).ToList();
+                filteredDefinitions = allDefinitions.ToList();
 
                 releaseDefsToMigrate = filteredDefinitions.Count;
                 Program.Log($"Amount of release definitions to migrate: {releaseDefsToMigrate}");
             }
             catch (Exception e)
             {
-                var errorMsg = $"Error filtering release definitions by rootfolder(s): {string.Join(", ", rootFoldersToInclude)}";
+                var errorMsg = $"Error filtering release definitions";
                 Program.Log($"{errorMsg} Error: {e}");
                 throw new Exception(errorMsg, e);
             }
