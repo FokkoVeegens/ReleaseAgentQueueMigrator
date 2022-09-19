@@ -9,7 +9,7 @@ The code can be executed in Visual Studio using a PAT token with sufficient righ
 Instructions:
 
 **Before migration** (on the old instance):
-* Get all existing agent pools (using REST API or a script, also possible from the browser), see: https://docs.microsoft.com/en-us/rest/api/azure/devops/distributedtask/pools/get-agent-pools?view=azure-devops-rest-6.0 
+* Get all existing agent pools (using REST API or a script, also possible from the browser), see: https://docs.microsoft.com/en-us/rest/api/azure/devops/distributedtask/pools/get-agent-pools?view=azure-devops-rest-6.0 > See the powershell script in the same directory as this readme!
 * Add name and id of all agent pools to the mapping file `<project>_old_agent_pools.json` (rename the file). Each project has its own file.
 * This file is used (after migration) to find the name of the agent pool using the id from the release definition. The name is then used to find the new id querying the new instance of Azure DevOps. 
  
