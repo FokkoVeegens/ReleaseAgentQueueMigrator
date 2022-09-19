@@ -1,4 +1,4 @@
-﻿namespace AzureDevopsAgentPoolMigrator
+namespace AzureDevopsAgentPoolMigrator
 {
     using System;
     using Microsoft.TeamFoundation.DistributedTask.WebApi;
